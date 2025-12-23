@@ -1,30 +1,45 @@
 import pymysql
 import os
-from dotenv import load_dotenv
 from urllib.parse import urlparse
 
-load_dotenv()
+# 🔑 Use Render Environment Variable
+uri = os.getenv("SQLALCHEMY_DATABASE_URI")
 
-uri = os.getenv('DATABASE_URI')
-# Example: mysql+pymysql://root:password@localhost/field_service_db
-# Parse it
+if not uri:
+    raise RuntimeError("SQLALCHEMY_DATABASE_URI environment variable not set")
+
+# Parse MySQL URI
+# Example:
+# mysql+pymysql://user:password@host:port/dbname
 result = urlparse(uri)
+
 username = result.username
 password = result.password or ""
 hostname = result.hostname
-dbname = result.path[1:]
+port = result.port or 3306
+dbname = result.path.lstrip("/")
 
 def create_database():
-    print(f"Connecting to {hostname} as {username} with password '{password}'...")
+    print(f"Connecting to {hostname}:{port} as {username}...")
+
     try:
-        conn = pymysql.connect(host=hostname, user=username, password=password)
+        conn = pymysql.connect(
+            host=hostname,
+            user=username,
+            password=password,
+            port=port,
+            ssl={"ssl_ca": "/etc/ssl/certs/ca-certificates.crt"}  # ✅ Required for Aiven
+        )
+
         cursor = conn.cursor()
-        cursor.execute(f"CREATE DATABASE IF NOT EXISTS {dbname}")
-        print(f"Database {dbname} check/creation successful.")
+        cursor.execute(f"CREATE DATABASE IF NOT EXISTS `{dbname}`")
+        print(f"Database '{dbname}' check/creation successful.")
+
         cursor.close()
         conn.close()
+
     except Exception as e:
-        print(f"Error creating database: {e}")
+        print(f"❌ Error creating database: {e}")
 
 if __name__ == "__main__":
     create_database()
