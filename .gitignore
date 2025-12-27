@@ -1,16 +1,13 @@
 # Python
 __pycache__/
 *.pyc
-*.pyo
-*.pyd
 
-# Virtual env
+# Virtualenv
 venv/
+
+# Env secrets
 .env
 
 # Logs
 *.log
-
-# OS
-.DS_Store
 
